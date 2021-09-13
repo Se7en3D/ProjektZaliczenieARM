@@ -8,10 +8,12 @@
 #ifndef INC_STATEMACHINE_H_
 #define INC_STATEMACHINE_H_
 
+#define STATEMACHINE_TIME_UNTIL_THE_STATE_CHANGES_TO_SENDING 100 //Czas po którym może nastapić zmiana stanu z stateMachineRecevingEnum na stateMachineSendingEnum
+#define STATEMACHINE_RETURN_TRUE 1;
+#define STATEMACHINE_RETURN_FALSE 0;
 typedef enum{
-	stateMachineIdleEnum,
-	stateMachineSendingEnum,
 	stateMachineRecevingEnum,
+	stateMachineSendingEnum,
 }stateMachineHandleMainEnum;
 
 typedef struct{
@@ -19,11 +21,11 @@ typedef struct{
 	uint32_t time;
 }stateMachineHandleMainStruct;
 
-
+stateMachineHandleMainStruct stateMachineStruct;
 void stateMachineInit();
-void stateMachineIdle();
-void stateMachineSending();
-void stateMachineReceving();
 void stateMachineAddTime();
+void stateMachineResetTime();
+uint16_t stateMachineChangeToReceving();
+uint16_t stateMachineChangeToSending();
 
 #endif /* INC_STATEMACHINE_H_ */

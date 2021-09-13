@@ -108,3 +108,14 @@ void uartComTime(){
 		uartComBufforToCommunicationTx.time++;
 	}
 }
+uint32_t uartComGetSizeDataInBuffor(uartCom_bbuf_t *buffer){
+	if(buffer->tail==buffer->head){
+		return 0;
+	}
+	if(buffer->head>buffer->tail){
+		return buffer->head-buffer->tail;
+	}else{
+		return buffer->maxlen-buffer->tail+buffer->head;
+	}
+
+}

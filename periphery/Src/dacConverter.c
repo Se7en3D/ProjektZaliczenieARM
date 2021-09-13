@@ -7,6 +7,9 @@
 #include "stm32f4xx_hal.h"
 #include <stdio.h>
 #include "dacConverter.h"
+#include "stateMachine.h"
+#include "uartCom.h"
+
 
 volatile static uint32_t dacSin4700[]={
 		2048,
@@ -292,6 +295,9 @@ void dacNextBitConvert(){
 	if(dacBaseStruct.status==DACCONVERTER_BUSY){
 		if(dacBaseStruct.bitSendNumber>DACCINVERTER_MAX_BIT_TO_SEND){
 			dacBaseStruct.status=DACCONVERTER_IDLE;
+			if(uartComGetSizeDataInBuffor(&uartComBufforToCommunicationRx)==0){
+				stateMachineChangeToReceving();
+			}
 			dacBaseStruct.bitSendNumber=0;
 			return;
 		}

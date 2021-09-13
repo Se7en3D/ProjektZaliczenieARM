@@ -66,5 +66,6 @@ void adcConvert();
 void adcEndConvert();
 uint32_t adcGetConvertBit();
 uint32_t adcConverterGoertzel(uint16_t* data,uint32_t numSamples);
+void adcConverterStop();
 
 #endif /* PERIPHERY_INC_ADCCONVERTER_H_ */

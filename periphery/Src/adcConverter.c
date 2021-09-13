@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include "adcConverter.h"
+#include "statemachine.h"
 
 
 void adcConverterInit(ADC_HandleTypeDef *hadc,DMA_HandleTypeDef *hdma_adc){
@@ -55,20 +56,22 @@ void adcConverterInit(ADC_HandleTypeDef *hadc,DMA_HandleTypeDef *hdma_adc){
 
 void adcCoverterCheckDMAConversion(){
 	if(adcConverterPrimaryStruct.status==ADCCONVERTER_WAIT){
-		uint16_t sample=HAL_ADC_GetValue(adcConverterPrimaryStruct.hadc);
-		if(sample>ADCCONVERTER_MIN_VALUE_SAMPLE_TO_START_DMA_CONVERSION){
-			HAL_ADC_Stop_IT(adcConverterPrimaryStruct.hadc);
+			uint16_t sample=HAL_ADC_GetValue(adcConverterPrimaryStruct.hadc);
+			if(sample>ADCCONVERTER_MIN_VALUE_SAMPLE_TO_START_DMA_CONVERSION){
+				HAL_ADC_Stop_IT(adcConverterPrimaryStruct.hadc);
 
-			adcConverterPrimaryStruct.status=ADCCONVERTERT_BUSY;
-		}
+				adcConverterPrimaryStruct.status=ADCCONVERTERT_BUSY;
+			}
 	}
 
 }
 
 void adcConverterStartITConversion(){
 	if(adcConverterPrimaryStruct.status==ADCCONVERTERT_IDLE){
-		HAL_ADC_Start_IT(adcConverterPrimaryStruct.hadc);
-		adcConverterPrimaryStruct.status=ADCCONVERTER_WAIT;
+		if(stateMachineStruct.status==stateMachineRecevingEnum){
+			HAL_ADC_Start_IT(adcConverterPrimaryStruct.hadc);
+			adcConverterPrimaryStruct.status=ADCCONVERTER_WAIT;
+		}
 	}
 }
 
@@ -161,6 +164,7 @@ uint32_t adcConverterGoertzel(uint16_t* data,uint32_t numSamples){
     magnitudeFor1 = sqrtf(realFor1*realFor1 + imagFor1*imagFor1);
 
     if(magnitudeFor1>ADCCONVERTER_MIN_VALUE_GOERTZEL ||magnitudeFor0>ADCCONVERTER_MIN_VALUE_GOERTZEL){
+    	stateMachineResetTime(); //Reset czasu braku transmisji;
     	adcConverterPrimaryStruct.countNoneTransmission=0;
 		if(magnitudeFor0>magnitudeFor1){
 			return 0;
@@ -175,4 +179,30 @@ uint32_t adcConverterGoertzel(uint16_t* data,uint32_t numSamples){
     }
     return ADCCONVERTER_ALL_STATUS_NO_FULL;
 }
+void adcConverterStop(){
+	switch(adcConverterPrimaryStruct.status){
+	case ADCCONVERTERT_IDLE:
+		break;
+	case ADCCONVERTER_WAIT:
+		adcConverterPrimaryStruct.status=ADCCONVERTERT_IDLE;
+		break;
+	case ADCCONVERTERT_BUSY:
+		if(adcConverterPrimaryStruct.hdma_adc->State==HAL_DMA_STATE_BUSY){
+			HAL_ADC_Stop_DMA(adcConverterPrimaryStruct.hadc);
+			adcConverterPrimaryStruct.status=ADCCONVERTERT_IDLE;
+			int head=adcConverterPrimaryStruct.head;
+			if(adcConverterPrimaryStruct.waveBufferStatus[head]==BUFFER_BUSY){
+				adcConverterPrimaryStruct.waveBufferStatus[head]=BUFFER_CLEAR;
+				if(head==0){
+					adcConverterPrimaryStruct.head=ADCCONVERTER_MAX_LENGTH_ARRAY_OF_BUFFOR-1;
+				}else{
+					adcConverterPrimaryStruct.head--;
+				}
+
+			}
+		}
+		break;
+	}
+}
+
 

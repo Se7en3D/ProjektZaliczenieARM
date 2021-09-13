@@ -38,8 +38,8 @@ typedef struct {
     DMA_HandleTypeDef *hdma_usart1_tx;
 } uartCom_bbuf_t; // struktura bufora kołowego do wysyłania danych STM32->PC
 
-uartCom_bbuf_t uartComBufforToCommunicationTx;
-uartCom_bbuf_t uartComBufforToCommunicationRx;
+uartCom_bbuf_t uartComBufforToCommunicationTx; //Bufor na dane które należy wysłać
+uartCom_bbuf_t uartComBufforToCommunicationRx; //bufor na dane odebrane z konwertera
 uartCom_bbuf_t uartComBufferToDiagnostics;
 void uartComInit(uartCom_bbuf_t *buffer,DMA_HandleTypeDef *hdma);
 void uartComPush(uartCom_bbuf_t *buffer,const uint8_t data);
@@ -49,5 +49,6 @@ uint32_t uartComGetBufferLength(uartCom_bbuf_t *buffer);
 uint16_t uartComPop(uartCom_bbuf_t *buffer);
 void uartComResetByte(uartCom_bbuf_t *buffer);
 void uartComTime();
+uint32_t uartComGetSizeDataInBuffor(uartCom_bbuf_t *buffer);
 
 #endif /* PERIPHERY_INC_UARTCOM_H_ */
