@@ -32,8 +32,6 @@ void adcConverterInit(ADC_HandleTypeDef *hadc,DMA_HandleTypeDef *hdma_adc){
 	}
 	adcConverterPrimaryStruct.targetFrequencyFor0=frequency0;
 	adcConverterPrimaryStruct.targetFrequencyFor1=frequency1;
-
-
 	//Obliczenie zmiennych pomocniczych do liczenia algorytmu Goertzel-a
 	int k;
 	float floatnumSamples;

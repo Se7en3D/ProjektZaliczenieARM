@@ -49,13 +49,13 @@ DMA_HandleTypeDef hdma_adc1;
 DAC_HandleTypeDef hdac;
 DMA_HandleTypeDef hdma_dac1;
 
-TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim7;
 
 UART_HandleTypeDef huart4;
 UART_HandleTypeDef huart5;
 DMA_HandleTypeDef hdma_uart4_tx;
+DMA_HandleTypeDef hdma_uart5_tx;
 
 /* USER CODE BEGIN PV */
 
@@ -71,7 +71,6 @@ static void MX_ADC1_Init(void);
 static void MX_UART4_Init(void);
 static void MX_TIM7_Init(void);
 static void MX_UART5_Init(void);
-static void MX_TIM1_Init(void);
 static void MX_NVIC_Init(void);
 /* USER CODE BEGIN PFP */
 
@@ -125,7 +124,6 @@ int main(void)
   MX_UART4_Init();
   MX_TIM7_Init();
   MX_UART5_Init();
-  MX_TIM1_Init();
 
   /* Initialize interrupts */
   MX_NVIC_Init();
@@ -135,13 +133,17 @@ int main(void)
   dacConverterInit(&hdac);
   HAL_TIM_Base_Start(&htim2);
   HAL_TIM_Base_Start_IT(&htim7);
-  HAL_TIM_Base_Start(&htim1);
-  HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_1);
+  //HAL_TIM_Base_Start(&htim1);
+ // HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim2,TIM_CHANNEL_3);
   adcConverterInit(&hadc1, &hdma_adc1);
-  uartComInit(&uartComBufforToCommunicationTx,&hdma_uart4_tx);
+  //uartComInit(&uartComBufforToCommunicationTx,&hdma_uart4_tx);
+  //uartComInit(&uartComBufforToCommunicationRx,0);
+  //HAL_UART_Receive_IT(&huart4, &uartComBufforToCommunicationRx.bufforForBit, 1);
+
+  uartComInit(&uartComBufforToCommunicationTx,&hdma_uart5_tx);
   uartComInit(&uartComBufforToCommunicationRx,0);
-  HAL_UART_Receive_IT(&huart4, &uartComBufforToCommunicationRx.bufforForBit, 1);
+  HAL_UART_Receive_IT(&huart5, &uartComBufforToCommunicationRx.bufforForBit, 1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -166,17 +168,17 @@ int main(void)
 		  }
 	  }
 
-	  if(hdma_uart4_tx.State==HAL_DMA_STATE_READY){
+	  if(hdma_uart5_tx.State==HAL_DMA_STATE_READY){
 		  uint8_t *uartBufferPointer=uartComGetBufferFirstElementAddress(&uartComBufforToCommunicationTx);
 		  uint32_t uartBufferLength=uartComGetBufferLength(&uartComBufforToCommunicationTx);
 		  if(uartBufferLength!=0){
-			  HAL_UART_Transmit_DMA(&huart4, uartBufferPointer, uartBufferLength);
+			  HAL_UART_Transmit_DMA(&huart5, uartBufferPointer, uartBufferLength);
 		  }
 	  }
 
 	  //Reset peryferiów jeśli któryś nie działa
-	  if(huart4.RxState==HAL_UART_STATE_READY){
-		  HAL_UART_Receive_IT(&huart4, &uartComBufforToCommunicationRx.bufforForBit, 1);
+	  if(huart5.RxState==HAL_UART_STATE_READY){
+		  HAL_UART_Receive_IT(&huart5, &uartComBufforToCommunicationRx.bufforForBit, 1);
 	  }
     /* USER CODE END WHILE */
 
@@ -253,6 +255,12 @@ static void MX_NVIC_Init(void)
   /* TIM7_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(TIM7_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(TIM7_IRQn);
+  /* UART5_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(UART5_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(UART5_IRQn);
+  /* DMA1_Stream7_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream7_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream7_IRQn);
 }
 
 /**
@@ -340,81 +348,6 @@ static void MX_DAC_Init(void)
   /* USER CODE BEGIN DAC_Init 2 */
 
   /* USER CODE END DAC_Init 2 */
-
-}
-
-/**
-  * @brief TIM1 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_TIM1_Init(void)
-{
-
-  /* USER CODE BEGIN TIM1_Init 0 */
-
-  /* USER CODE END TIM1_Init 0 */
-
-  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
-  TIM_MasterConfigTypeDef sMasterConfig = {0};
-  TIM_OC_InitTypeDef sConfigOC = {0};
-  TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig = {0};
-
-  /* USER CODE BEGIN TIM1_Init 1 */
-
-  /* USER CODE END TIM1_Init 1 */
-  htim1.Instance = TIM1;
-  htim1.Init.Prescaler = 0;
-  htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim1.Init.Period = 10;
-  htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim1.Init.RepetitionCounter = 0;
-  htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-  if (HAL_TIM_ConfigClockSource(&htim1, &sClockSourceConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_TIM_PWM_Init(&htim1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 5;
-  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
-  sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
-  sConfigOC.OCFastMode = TIM_OCFAST_ENABLE;
-  sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
-  sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
-  if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sBreakDeadTimeConfig.OffStateRunMode = TIM_OSSR_DISABLE;
-  sBreakDeadTimeConfig.OffStateIDLEMode = TIM_OSSI_DISABLE;
-  sBreakDeadTimeConfig.LockLevel = TIM_LOCKLEVEL_OFF;
-  sBreakDeadTimeConfig.DeadTime = 0;
-  sBreakDeadTimeConfig.BreakState = TIM_BREAK_DISABLE;
-  sBreakDeadTimeConfig.BreakPolarity = TIM_BREAKPOLARITY_HIGH;
-  sBreakDeadTimeConfig.AutomaticOutput = TIM_AUTOMATICOUTPUT_DISABLE;
-  if (HAL_TIMEx_ConfigBreakDeadTime(&htim1, &sBreakDeadTimeConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN TIM1_Init 2 */
-
-  /* USER CODE END TIM1_Init 2 */
-  HAL_TIM_MspPostInit(&htim1);
 
 }
 
@@ -705,7 +638,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
 	}
 }
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
-	if(huart==&huart4){
+	if(huart==&huart5){
 		uartComPush(&uartComBufforToCommunicationRx,uartComBufforToCommunicationRx.bufforForBit);
 		HAL_UART_Receive_IT(huart, &uartComBufforToCommunicationRx.bufforForBit, 1);
 	}
