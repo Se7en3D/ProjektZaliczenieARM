@@ -1,9 +1,11 @@
-/*
- * adcConverter.c
- *
- *  Created on: 30 sie 2021
- *      Author: DanielD
- */
+/**
+  ******************************************************************************
+  * @file    adcConverter.c
+  * @author  Daniel Dunak
+  * @brief   Plik nagłówkowy odpowiedzialny za kontrolę nad przetwornikiem pobierającym próbki sygnału
+  *
+  ******************************************************************************
+  */
 #include "stm32f4xx_hal.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,7 +13,12 @@
 #include "adcConverter.h"
 #include "statemachine.h"
 
-
+/**
+  * @brief	Inicjaliazcja struktury adcConverter_Primary_Struct_t
+  * @param	hadc wskaźnik na strukturę ADC_HandleTypeDef
+  * @param	hdma_adc wskaznik na strkture DMA_HandleTypeDef
+  * @retval None
+  */
 void adcConverterInit(ADC_HandleTypeDef *hadc,DMA_HandleTypeDef *hdma_adc){
 	adcConverterPrimaryStruct.hadc=hadc;
 	adcConverterPrimaryStruct.hdma_adc=hdma_adc;
@@ -52,6 +59,10 @@ void adcConverterInit(ADC_HandleTypeDef *hadc,DMA_HandleTypeDef *hdma_adc){
     adcConverterPrimaryStruct.coeffFor1 = 2.0 * adcConverterPrimaryStruct.cosineFor1;
 }
 
+/**
+  * @brief	Funkcja przechodząca do stanu ADCCONVERTERT_BUSY
+  * @retval None
+  */
 void adcCoverterCheckDMAConversion(){
 	if(adcConverterPrimaryStruct.status==ADCCONVERTER_WAIT){
 			uint16_t sample=HAL_ADC_GetValue(adcConverterPrimaryStruct.hadc);
@@ -63,7 +74,10 @@ void adcCoverterCheckDMAConversion(){
 	}
 
 }
-
+/**
+  * @brief	Funkcja przechodząca do stanu ADCCONVERTER_WAIT
+  * @retval None
+  */
 void adcConverterStartITConversion(){
 	if(adcConverterPrimaryStruct.status==ADCCONVERTERT_IDLE){
 		if(stateMachineStruct.status==stateMachineRecevingEnum){
@@ -72,7 +86,10 @@ void adcConverterStartITConversion(){
 		}
 	}
 }
-
+/**
+  * @brief	Funkcja do odbioru kolejnych bitów w transmisji
+  * @retval None
+  */
 void adcConvert(){
 	if(adcConverterPrimaryStruct.hdma_adc->State!=HAL_DMA_STATE_READY){ //Sprawdzenie czy DMA jest gotowy do uruchomienia
 		return;
@@ -96,6 +113,10 @@ void adcConvert(){
 	}
 }
 
+/**
+  * @brief	Funkcja kończąca konwersję ciagłą
+  * @retval None
+  */
 void adcEndConvert(){
 	if(adcConverterPrimaryStruct.waveBufferStatus[adcConverterPrimaryStruct.head]==BUFFER_BUSY){
 		adcConverterPrimaryStruct.waveBufferStatus[adcConverterPrimaryStruct.head]=BUFFER_FULL;
@@ -104,6 +125,10 @@ void adcEndConvert(){
 	}
 }
 
+/**
+  * @brief	Funkcja zwraca wartość bitu z tablicy
+  * @retval uint32_t
+  */
 uint32_t adcGetConvertBit(){
 	uint32_t convertBit=ADCCONVERTER_ALL_STATUS_NO_FULL;
 	uint32_t next=adcConverterPrimaryStruct.tail;
@@ -134,6 +159,10 @@ uint32_t adcGetConvertBit(){
 	}
 }
 
+/**
+  * @brief	funkcja algorytmu Goertzela
+  * @retval uint32_t
+  */
 uint32_t adcConverterGoertzel(uint16_t* data,uint32_t numSamples){
 	float   q0For0=0,q1For0=0,q2For0=0,realFor0,imagFor0,magnitudeFor0;
 	float   q0For1=0,q1For1=0,q2For1=0,realFor1,imagFor1,magnitudeFor1;
@@ -177,6 +206,11 @@ uint32_t adcConverterGoertzel(uint16_t* data,uint32_t numSamples){
     }
     return ADCCONVERTER_ALL_STATUS_NO_FULL;
 }
+
+/**
+  * @brief	Zatrzymanie ciągłej konwersji
+  * @retval uint32_t
+  */
 void adcConverterStop(){
 	switch(adcConverterPrimaryStruct.status){
 	case ADCCONVERTERT_IDLE:

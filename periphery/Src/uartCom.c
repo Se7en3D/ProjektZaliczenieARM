@@ -1,9 +1,11 @@
-/*
- * uartCom.c
- *
- *  Created on: 13 sie 2021
- *      Author: DanielD
- */
+/**
+  ******************************************************************************
+  * @file    uartCom.c
+  * @author  Daniel Dunak
+  * @brief   Plik zródłowy komunikacji po portcie UART
+  *
+  ******************************************************************************
+  */
 #include <stdio.h>
 #include "stm32f4xx_hal.h"
 #include "uartCom.h"
@@ -13,7 +15,7 @@
   * @param  buffer wzkażnik do struktury uartCom_bbuf_t która ma zostac zainicjalizowana oraz do której
   * 		mają zostać wpisane podstawowe zmienne
   * @param  hdma wskażnik do struktury DMA_HandleTypeDef potrzebnej do automatycznego wysyłania danych
-  * @retval brak
+  * @retval None
   */
 void uartComInit(uartCom_bbuf_t *buffer,DMA_HandleTypeDef *hdma){
 	if(hdma!=0)
@@ -22,7 +24,12 @@ void uartComInit(uartCom_bbuf_t *buffer,DMA_HandleTypeDef *hdma){
 	buffer->maxlen=UARTCOM_BUF_MAXLEN;
 }
 
-
+/**
+  * @brief  Dodanie kolejnego bajtu do struktury uartCom_bbuf_t
+  * @param  buffer wzkażnik do struktury uartCom_bbuf_t
+  * @param  data dana która ma zostać dodana do bufora
+  * @retval None
+  */
 void uartComPush(uartCom_bbuf_t *buffer,const uint8_t data){
 	if(buffer->maxlen!=UARTCOM_BUF_MAXLEN){
 		return;
@@ -41,6 +48,12 @@ void uartComPush(uartCom_bbuf_t *buffer,const uint8_t data){
 	buffer->head = next;             // head to next data offset.
 }
 
+/**
+  * @brief  Dodanie bitu do struktury uartCom_bbuf_t
+  * @param  buffer wzkażnik do struktury uartCom_bbuf_t
+  * @param  bit wartość bitowa 0 lub 1 która ma zostać dodana
+  * @retval None
+  */
 void uartComAddBit(uartCom_bbuf_t *buffer,const uint8_t bit){
 
 	buffer->bufforForBit|=(bit&0x01)<<buffer->numberAddBit;
@@ -52,6 +65,12 @@ void uartComAddBit(uartCom_bbuf_t *buffer,const uint8_t bit){
 		buffer->numberAddBit=0;
 	}
 }
+
+/**
+  * @brief  Zwraca wzkaźnik na element tablicy o numerze równym zmiennej tail
+  * @param  buffer wzkażnik do struktury uartCom_bbuf_t
+  * @retval uint8_t* wkaźnik
+  */
 uint8_t *uartComGetBufferFirstElementAddress(uartCom_bbuf_t *buffer){
 	if(buffer->time>UARTCOM_TIME_TO_DELETE_BUFFOR_FOR_DATA){
 		if(buffer->numberAddBit>0){
@@ -64,6 +83,11 @@ uint8_t *uartComGetBufferFirstElementAddress(uartCom_bbuf_t *buffer){
 	return &buffer->buffer[buffer->tail];
 }
 
+/**
+  * @brief  Zwraca wielkość bajtów które znajdują się w buforze
+  * @param  buffer wzkażnik do struktury uartCom_bbuf_t
+  * @retval uint32_t
+  */
 uint32_t uartComGetBufferLength(uartCom_bbuf_t *buffer){
 	if(buffer->head==buffer->tail){
 		return 0;
@@ -80,6 +104,11 @@ uint32_t uartComGetBufferLength(uartCom_bbuf_t *buffer){
 	}
 }
 
+/**
+  * @brief  Zwraca bajt z buforu danych
+  * @param  buffer wzkażnik do struktury uartCom_bbuf_t
+  * @retval uint16_t
+  */
 uint16_t uartComPop(uartCom_bbuf_t *buffer){
 	uint16_t data;
 	int next;
@@ -98,16 +127,29 @@ uint16_t uartComPop(uartCom_bbuf_t *buffer){
 	buffer->tail = next;              // tail to next offset.
 	return data;  // return success to indicate successful push.
 }
+/**
+  * @brief  Resetuje dane w buforze do składania bajtów
+  * @retval None
+  */
 void uartComResetByte(uartCom_bbuf_t *buffer){
 	buffer->numberAddBit=0;
 	buffer->bufforForBit=0;
 }
 
+/**
+  * @brief  Zwiększa zmianną time o 1 dla struktury uartComBufforToCommunicationTx
+  * @retval None
+  */
 void uartComTime(){
 	if(uartComBufforToCommunicationTx.numberAddBit>0){
 		uartComBufforToCommunicationTx.time++;
 	}
 }
+/**
+  * @brief  Zwraca wielkość bajtów które znajdują się w buforze
+  * @param  buffer wzkażnik do struktury uartCom_bbuf_t
+  * @retval uint32_t
+  */
 uint32_t uartComGetSizeDataInBuffor(uartCom_bbuf_t *buffer){
 	if(buffer->tail==buffer->head){
 		return 0;

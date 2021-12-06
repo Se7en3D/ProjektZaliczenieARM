@@ -1,17 +1,21 @@
-/*
- * dacConverter.c
- *
- *  Created on: 2 sie 2021
- *      Author: DanielD
- */
+/**
+  ******************************************************************************
+  * @file    dacConverter.c
+  * @author  Daniel Dunak
+  * @brief   Plik zródłowy odpowiedzialny za kontrolę nad przetwornikiem konwertującym bity na przebieg sinusoidalny
+  *
+  ******************************************************************************
+  */
 #include "stm32f4xx_hal.h"
 #include <stdio.h>
 #include "dacConverter.h"
 #include "stateMachine.h"
 #include "uartCom.h"
 
-
-volatile static uint32_t dacSin4700[]={
+/**
+ * @brief dacSin4700[] tablica zawerająca próbki sygnału sinusoidalnego dla czestotliwości 4700Hz
+ */
+volatile static const uint32_t dacSin4700[]={
 		2048,
 		2176,
 		2303,
@@ -147,8 +151,10 @@ volatile static uint32_t dacSin4700[]={
 		1793,
 		2048,
 };
-
-volatile static uint32_t dacSin6700[]={
+/**
+ * @brief dacSin6700[] tablica zawerająca próbki sygnału sinusoidalnego dla czestotliwości 6700hz
+ */
+volatile static const uint32_t dacSin6700[]={
 		2048,
 		2230,
 		2409,
@@ -284,6 +290,12 @@ volatile static uint32_t dacSin6700[]={
 		774,
 		2048,
 };
+
+/**
+  * @brief	Inicjaliazcja struktury dacBaseStruct do wartości domyślnych
+  * @param	hdac wskaźnik na strukturę DAC_HandleTypeDef
+  * @retval None
+  */
 void dacConverterInit(DAC_HandleTypeDef *hdac){
 	dacBaseStruct.hdac=hdac;
 	dacBaseStruct.bitSendNumber=0;
@@ -291,6 +303,10 @@ void dacConverterInit(DAC_HandleTypeDef *hdac){
 	dacBaseStruct.sizeWaveF1=sizeof(dacSin6700)/sizeof(uint32_t);
 }
 
+/**
+  * @brief	Przejście do konwersji kolejnego bitu
+  * @retval None
+  */
 void dacNextBitConvert(){
 	if(dacBaseStruct.status==DACCONVERTER_BUSY){
 		if(dacBaseStruct.bitSendNumber>DACCINVERTER_MAX_BIT_TO_SEND){
@@ -311,6 +327,11 @@ void dacNextBitConvert(){
 	}
 
 }
+/**
+  * @brief	Przejście do konwersji kolejnego bitu
+  * @param	data wartość 8 bitowa danych do wysłania
+  * @retval None
+  */
 void dacConverterSetNewDataToSend(uint8_t data){
 	if(dacBaseStruct.status==DACCONVERTER_IDLE){
 		dacBaseStruct.dataToSend=data;
@@ -332,6 +353,11 @@ void dacConverterSetNewDataToSend(uint8_t data){
 		dacNextBitConvert();
 	}
 }
+
+/**
+  * @brief	Zarzadzanie zmienną timeBreak
+  * @retval None
+  */
 void dacAddTimeBraek(){
 	switch(dacBaseStruct.status){
 		case DACCONVERTER_IDLE:
